@@ -25,7 +25,11 @@
     "runner:dev": "cross-env NODE_ENV=development node dist/server.js",
     "runner:prod": "cross-env NODE_ENV=production node dist/server.js",
     "docker": "sh start.sh",
-    "check-commit-msg": "node scripts/verify-commit.mjs"
+    "check-commit-msg": "node scripts/verify-commit.mjs",
+    "test": "cross-env NODE_ENV=local tap --node-arg=--require=ts-node/register --node-arg=--require=tsconfig-paths/register test/*.test.ts --no-timeout"
+  },
+  "tap": {
+    "check-coverage": false
   },
   "keywords": [
     "fastify",
@@ -62,6 +66,8 @@
     "only-allow": "^1.1.1",
     "prettier": "^2.7.1",
     "protobufjs-cli": "^1.0.0",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.0.0",
     "typescript": "^4.7.4",
     "yargs": "^17.5.1"
   },
