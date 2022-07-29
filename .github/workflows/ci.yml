@@ -12,14 +12,34 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x]
+        redis-version: [7]
+        mongodb-version: ["5.0"]
+
     steps:
+      - name: Git checkout
       - uses: actions/checkout@v2
+
+      - name: Start redis v${{ matrix.redis-version }}
+        uses: superchargejs/redis-github-action@1.1.0
+        with:
+          redis-version: ${{ matrix.redis-version }}
+          redis-port: 6379
+      
+      - name: Start mongoDB
+        uses: supercharge/mongodb-github-action@1.7.0
+        with:
+          mongodb-version: ${{ matrix.mongodb-version }}
+          mongodb-port: 27017
+
       - name: Setup node.js
         uses: actions/setup-node@v1
         with:
           node-version: "16.x"
       - name: Install packageManage
-        run: npm install -g pnpm 
+        run: npm install -g pnpm
       - name: Install dependencies
         run: pnpm install
       - name: Lint
