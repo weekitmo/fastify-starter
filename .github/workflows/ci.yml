@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Git checkout
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
 
       - name: Start redis v${{ matrix.redis-version }}
         uses: superchargejs/redis-github-action@1.1.0

@@ -5,7 +5,9 @@ import { beforeEachFn, teardownFn } from "./utils"
 beforeEach(beforeEachFn)
 teardown(teardownFn)
 
+// https://github.com/fastify/fastify/issues/2038
 test("Basic route check", async (t: ITapTest) => {
+  t.plan(2)
   const { statusCode, ...response } = await t.context.server.inject({
     url: "/user",
     method: "GET"

@@ -1,6 +1,6 @@
 import { config } from "@/env"
 const env = config.current
-
+export const connectTimeoutMS = 5000
 export const PORT = env === "production" ? 6379 : 6379
 
 export const HOST = env === "production" ? `localhost` : `localhost`
