@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Start redis v${{ matrix.redis-version }}
-        uses: superchargejs/redis-github-action@1.1.0
+        uses: superchargejs/redis-github-action@1.4.0
         with:
           redis-version: ${{ matrix.redis-version }}
           redis-port: 6379
@@ -37,7 +37,7 @@ jobs:
       - name: Setup node.js
         uses: actions/setup-node@v1
         with:
-          node-version: "16.x"
+          node-version: ${{ matrix.node-version }}
       - name: Install packageManage
         run: npm install -g pnpm
       - name: Install dependencies
