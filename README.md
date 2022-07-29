@@ -1,5 +1,4 @@
 <img src="./images/fastify.svg" width="600" height="auto" />
-<img src="./images/turbo.png" width="600" height="auto" />
 <img src="./images/esbuild.svg" width="200" />
 
 # A fastify boilerplate with typescript
