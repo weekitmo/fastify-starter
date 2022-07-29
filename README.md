@@ -26,3 +26,6 @@ pnpm build
 # start server
 pnpm runner:local
 ```
+## https
+
+> maybe use mkcert, ref -> [mkcert](https://github.com/FiloSottile/mkcert)

@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Welcome!</title>
+    <script src="https://unpkg.com/vue@next"></script>
     <script src="/site/protobuf-light.js"></script>
 
     <style>
@@ -28,6 +29,8 @@
     <h2>Welcome index</h2>
     <div class="protobuf"></div>
     <button class="base-btn" onclick="deal()">use protobuf</button>
+
+    <div id="app"></div>
 
     <script>
       let $root = undefined
@@ -69,6 +72,16 @@
       function deal() {
         main()
       }
+      const { createApp, h, ref, unref } = Vue
+      const app = Vue.createApp({
+        setup() {
+          const count = ref(4)
+          return () => {
+            return h("div", {}, unref(count))
+          }
+        }
+      })
+      const vm = app.mount("#app")
     </script>
   </body>
 </html>
