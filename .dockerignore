@@ -1,0 +1,15 @@
+.clinic
+.DS_Store
+.vascode
+.idea
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+node_modules
+dist
+./images/*

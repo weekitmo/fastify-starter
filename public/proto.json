@@ -1,0 +1,48 @@
+{
+  "nested": {
+    "ns": {
+      "nested": {
+        "Login": {
+          "fields": {
+            "username": {
+              "type": "string",
+              "id": 1
+            },
+            "password": {
+              "type": "string",
+              "id": 2
+            }
+          }
+        },
+        "AwesomeMessage": {
+          "fields": {
+            "name": {
+              "type": "string",
+              "id": 2
+            },
+            "private": {
+              "type": "bool",
+              "id": 3
+            },
+            "version": {
+              "type": "string",
+              "id": 4
+            },
+            "licence": {
+              "type": "string",
+              "id": 5
+            },
+            "value": {
+              "type": "int32",
+              "id": 6
+            },
+            "awesomeField": {
+              "type": "string",
+              "id": 7
+            }
+          }
+        }
+      }
+    }
+  }
+}

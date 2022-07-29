@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "target": "esnext",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "declaration": false,
+    "pretty": true,
+    "noEmitOnError": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "removeComments": true,
+    "esModuleInterop": true,
+    "newLine": "lf",
+    "noUnusedLocals": false,
+    "noFallthroughCasesInSwitch": true,
+    "useDefineForClassFields": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "lib": ["esnext"]
+  }
+}
