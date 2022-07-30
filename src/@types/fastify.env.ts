@@ -1,4 +1,5 @@
 import type { ICurrent } from "@/env"
+import { Searcher } from "@/utils/search"
 declare module "fastify" {
   export interface FastifyInstance {
     config: {
@@ -7,5 +8,6 @@ declare module "fastify" {
       port: number
       domain: string
     }
+    searcher: InstanceType<typeof Searcher>
   }
 }

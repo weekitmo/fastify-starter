@@ -7,6 +7,12 @@
 
 ### bootstrap
 
+- Vscode Debug mode
+```bash
+-> F5
+Pnpm Launch Program
+```
+
 - Docker mode
 
 ```bash

@@ -10,7 +10,7 @@ const getStartEndPtr = Symbol("#getStartEndPtr")
 const getBuffer = Symbol("#getBuffer")
 const openFilePromise = Symbol("#openFilePromise")
 
-class Searcher {
+export class Searcher {
   _dbFile: fs.PathLike | null
   _buffer: Buffer | null
   _vectorIndex: Buffer | null
