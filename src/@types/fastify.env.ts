@@ -10,4 +10,8 @@ declare module "fastify" {
     }
     searcher: InstanceType<typeof Searcher>
   }
+
+  export interface WebSocket {
+    uid: string
+  }
 }

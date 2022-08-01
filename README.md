@@ -8,6 +8,7 @@
 ### bootstrap
 
 - Vscode Debug mode
+
 ```bash
 -> F5
 Pnpm Launch Program
@@ -32,6 +33,16 @@ pnpm build
 # start server
 pnpm runner:local
 ```
+
 ## https
 
 > maybe use mkcert, ref -> [mkcert](https://github.com/FiloSottile/mkcert)
+
+```bash
+# in chrome enable chrome://flags/#allow-insecure-localhost
+brew install mkcert nss
+mkcert localhost 127.0.0.1 ::1
+mkcert -install
+
+# open keychain access.app & trust
+```

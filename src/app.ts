@@ -6,6 +6,7 @@ import cors from "@fastify/cors"
 import multipart from "@fastify/multipart"
 import fastifyStatic from "@fastify/static"
 import cookie, { FastifyCookieOptions } from "@fastify/cookie"
+import websocket from "@fastify/websocket"
 import webProxy from "./proxies/web"
 import { config } from "./env"
 import { initRedis } from "@/modules/db/redis"
@@ -41,12 +42,19 @@ const app: FastifyPluginAsync<AppOptions> = async (fastify, opts): Promise<void>
     // if redis not useful
     skipOnError: true
   })
+  await fastify.register(websocket, {
+    options: {
+      maxPayload: 5 * 1024 * 1024,
+      clientTracking: true
+    }
+  })
 
   await fastify.register(multipart, {
     limits: {
       fileSize: basicConf.upload.max
     },
-    addToBody: true
+    prefix: "/upload"
+    // addToBody: true
   })
   await fastify.register(cookie, {
     secret: "a-fastify-secret", // for cookies signature

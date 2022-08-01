@@ -17,7 +17,9 @@ specifiers:
   '@types/node': ^18.6.2
   '@types/shortid': ^0.0.29
   '@types/tap': ^15.0.7
+  '@types/uuid': ^8.3.4
   '@types/valid-url': ^1.0.3
+  '@types/ws': ^8.5.3
   '@types/yargs': ^17.0.10
   '@typescript-eslint/eslint-plugin': ^5.31.0
   '@typescript-eslint/parser': ^5.31.0
@@ -60,6 +62,7 @@ specifiers:
   uuid: ^8.3.2
   valid-url: ^1.0.9
   which-browser: ^0.7.0
+  ws: ^8.8.1
   yargs: ^17.5.1
 
 dependencies:
@@ -97,6 +100,7 @@ dependencies:
   uuid: 8.3.2
   valid-url: 1.0.9
   which-browser: 0.7.0
+  ws: 8.8.1
 
 devDependencies:
   '@types/formidable': 2.0.5
@@ -104,7 +108,9 @@ devDependencies:
   '@types/node': 18.6.2
   '@types/shortid': 0.0.29
   '@types/tap': 15.0.7
+  '@types/uuid': 8.3.4
   '@types/valid-url': 1.0.3
+  '@types/ws': 8.5.3
   '@types/yargs': 17.0.10
   '@typescript-eslint/eslint-plugin': 5.31.0_d5zwcxr4bwkhmuo464cb3a2puu
   '@typescript-eslint/parser': 5.31.0_he2ccbldppg44uulnyq4rwocfa
@@ -814,6 +820,10 @@ packages:
       '@types/node': 18.6.2
     dev: true
 
+  /@types/uuid/8.3.4:
+    resolution: {integrity: sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==}
+    dev: true
+
   /@types/valid-url/1.0.3:
     resolution: {integrity: sha512-+33x29mg+ecU88ODdWpqaie2upIuRkhujVLA7TuJjM823cNMbeggfI6NhxewaRaRF8dy+g33e4uIg/m5Mb3xDQ==}
     dev: true
@@ -828,6 +838,12 @@ packages:
       '@types/node': 18.6.2
       '@types/webidl-conversions': 6.1.1
     dev: false
+
+  /@types/ws/8.5.3:
+    resolution: {integrity: sha512-6YOoWjruKj1uLf3INHH7D3qTXwFfEsg1kf3c0uDdSBJwfa/llkwIjrAGV7j7mVgGNbzTQ3HiHKKDXl6bJPD97w==}
+    dependencies:
+      '@types/node': 18.6.2
+    dev: true
 
   /@types/yargs-parser/21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
