@@ -4,16 +4,24 @@ import chalk from "chalk"
 import { join } from "path"
 import fastifyApp from "./app"
 import { connectTimeoutMS } from "./constants/mongo"
-import { readFileSync } from "fs"
+import { readFileSync, existsSync } from "fs"
 
+const certPem = join(__dirname, "../localhost+2.pem")
+const keyPem = join(__dirname, "../localhost+2-key.pem")
+const isUseSSL = existsSync(certPem) && existsSync(keyPem)
+const scheme = isUseSSL ? `https` : `http`
+const opt = isUseSSL
+  ? {
+      https: {
+        cert: readFileSync(certPem),
+        key: readFileSync(keyPem)
+      }
+    }
+  : {}
 const app = Fastify({
   logger: config.current !== "production",
   pluginTimeout: connectTimeoutMS,
-  // http2: true,
-  https: {
-    cert: readFileSync(join(__dirname, "../localhost+2.pem")),
-    key: readFileSync(join(__dirname, "../localhost+2-key.pem"))
-  }
+  ...opt
 })
 
 async function main() {
@@ -26,9 +34,9 @@ async function main() {
 
   // Start listening.
   app
-    .listen({ port: Number(config.port ?? 3888), host: "0.0.0.0" })
+    .listen({ port: Number(config.port ?? 4002), host: "0.0.0.0" })
     .then(() => {
-      console.log(chalk.underline.green(`Fastify Listening on https://127.0.0.1:${config.port}`))
+      console.log(chalk.underline.green(`Fastify Listening on ${scheme}://127.0.0.1:${config.port}`))
     })
     .catch(err => {
       console.error(chalk.red(`[💢 Catch on listen] --> \n`), err)

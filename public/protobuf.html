@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome</title>
+    <script src="https://unpkg.com/vue@next"></script>
+    <script src="https://unpkg.com/naive-ui@2.32.1"></script>
+    <script src="/site/protobuf-light.js"></script>
+    <style>
+      body {
+        padding: 16px;
+        box-sizing: border-box;
+        margin: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+      .flex {
+        display: flex;
+      }
+      .flex-col {
+        flex-direction: column;
+      }
+      .around {
+        justify-content: space-around;
+      }
+      .btn-group {
+        margin-top: 20px;
+      }
+      .btn-group button {
+        margin: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <h2>Welcome proto</h2>
+      <div class="protobuf"></div>
+
+      <div class="btn-group">
+        <n-button @click="proto">fetch</n-button>
+      </div>
+    </div>
+
+    <script>
+      let $root = undefined
+      const scheme = window.location.protocol
+      async function main() {
+        const json = await fetch(`${scheme}//localhost:4002/site/proto.json`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }).then(res => res.json())
+
+        if (protobuf && protobuf.roots) {
+          $root = protobuf.roots["default"] = new protobuf.Root()
+          $root.addJSON(json.nested)
+
+          const PBMessageResponse = $root.lookup("ns.AwesomeMessage")
+
+          const buffer = await fetch(`${scheme}//localhost:4002/proto/encode`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/x-protobuf",
+              Accept: "application/x-protobuf"
+            }
+          }).then(res => res.arrayBuffer())
+
+          const buf = protobuf.util.newBuffer(buffer)
+          if (!PBMessageResponse) {
+            throw new Error(`Not parse with $root.lookup`)
+            return
+          }
+          // decode响应体
+          const decodedResponse = PBMessageResponse.decode(buf)
+          console.log(`decode success: 👇🏻👇🏻👇🏻 \n`, decodedResponse)
+          document.querySelector("div.protobuf").innerHTML = JSON.stringify(decodedResponse.toJSON(), null, 2)
+        }
+      }
+
+      const { createApp, h, ref, unref, onMounted } = Vue
+
+      const App = {
+        setup() {
+          return {
+            proto: main
+          }
+        }
+      }
+      const app = Vue.createApp(App)
+      app.use(naive)
+      app.mount("#app")
+    </script>
+  </body>
+</html>

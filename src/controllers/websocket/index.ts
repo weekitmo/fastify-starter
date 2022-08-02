@@ -1,72 +1,88 @@
 import { FastifyPluginAsync } from "fastify"
-import chalk from "chalk"
 import { v4 as uuidv4 } from "uuid"
 import * as WebSocket from "ws"
-const _prefix = `/ws`
-const history: string[] = []
-const controller: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-  function sendMessage(socket: WebSocket, message: any) {
-    socket.send(JSON.stringify(message))
-  }
+import { SocketDataEnum, DefUidSocket, MessageEvent } from "./type"
+import { client as redis, isReady } from "@/modules/db/redis"
 
+const _prefix = `/ws`
+const _cacheKey = `ws-history-list`
+const limit = 500
+const controller: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   function broadcast(clients: Set<WebSocket.WebSocket>, message: string, save?: boolean) {
     for (const client of clients) {
       client.send(message)
     }
 
-    if (save) {
-      history.push(message)
+    if (save && isReady()) {
+      redis.pipeline().rpush(`${_cacheKey}`, message).ltrim(`${_cacheKey}`, -limit, -1).exec()
     }
   }
 
-  fastify.get(`${_prefix}/connect`, { websocket: true }, (connection /* SocketStream */, req /* FastifyRequest */) => {
-    connection.socket.on("message", (message: any) => {
-      console.log(chalk.magenta(`💬 Received message from client: ${message.toString()}`))
-      connection.socket.send("hi client, i'm from server")
-    })
-  })
+  function serialization(type: keyof typeof SocketDataEnum, data: any) {
+    const msg: MessageEvent = {
+      type: type,
+      data: data,
+      date: new Date().toUTCString()
+    }
+    const messageEvent = JSON.stringify(msg)
 
-  fastify.get(`${_prefix}/chat`, { websocket: true }, (connection, req) => {
+    return messageEvent
+  }
+
+  fastify.get(`${_prefix}/cooperate`, { websocket: true }, async (connection, req) => {
     const { socket } = connection
-    const sk = socket as any
+    const sk = socket as DefUidSocket
+    // first connect
     if (!sk.uid) sk.uid = uuidv4()
 
     const server = fastify.websocketServer
 
     // new client connect broadcast current online & send history
-    const onlineEvent = JSON.stringify({
-      type: "count",
-      data: server.clients.size
-    })
-    history.map(msg => socket.send(msg))
-
+    const onlineEvent = serialization(SocketDataEnum.notify, { category: "online", value: server.clients.size })
     broadcast(server.clients, onlineEvent, false)
+    const records = await redis.lrange(`${_cacheKey}`, 0, -1)
+    records.map(msg => socket.send(msg))
+    const identifyEvent = serialization(SocketDataEnum.notify, { category: "identify", value: sk.uid })
+    socket.send(identifyEvent)
 
-    socket.on("message", function (message: any) {
-      console.log(chalk.red(sk.uid))
+    socket.on("message", function (message: string) {
       try {
-        const json = JSON.parse(message.toString())
+        const json = JSON.parse(message.toString()) as MessageEvent
         switch (json.type) {
-          case "message":
+          case SocketDataEnum.message:
             {
-              const messageEvent = JSON.stringify({
-                type: "accepted",
-                data: `${new Date().toISOString()}: ${json.data}`
+              const source = serialization(SocketDataEnum.message, {
+                category: "text",
+                value: json.data,
+                identify: sk.uid
               })
-
               // broadcast to all clients
-              fastify.log.info("---> broadcasting to all clients")
-              broadcast(server.clients, messageEvent, true)
+              broadcast(server.clients, source, true)
             }
             break
+          case SocketDataEnum.cooperate:
+            {
+              const source = serialization(SocketDataEnum.cooperate, {
+                category: "text",
+                value: json.data,
+                identify: sk.uid
+              })
+              // broadcast to all clients
+              broadcast(server.clients, source, false)
+            }
+            break
+          case SocketDataEnum.pingpong:
+            socket.send(serialization(SocketDataEnum.pingpong, { category: "text", value: `pong` }))
 
+            break
           default:
-            sendMessage(socket, { type: "error", data: "wrong type" })
+            socket.send(serialization(SocketDataEnum.error, { category: "error", value: `unknown type` }))
+
             break
         }
       } catch (error) {
         const err = error as unknown as any
-        sendMessage(socket, { type: "error", data: err?.message })
+        socket.send(serialization(SocketDataEnum.error, { category: "error", value: err?.message || null }))
       }
     })
   })
