@@ -2,8 +2,7 @@ import { FastifyPluginAsync } from "fastify"
 import plugin from "fastify-plugin"
 import WhichBrowser from "which-browser"
 import { parseShortId, ShortenParam } from "@/controllers/shorten"
-import websocketController from "@/controllers/websocket"
-import uploadController from "@/controllers/upload"
+
 const root: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   fastify.get("/", async function (request, reply) {
     return reply.code(206).send("")
@@ -16,8 +15,6 @@ const root: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     return ua.toString()
   })
   fastify.get<{ Params: ShortenParam }>("/st/:code", parseShortId)
-  fastify.register(websocketController)
-  fastify.register(uploadController)
 }
 
 export default plugin(root, { name: "root" })

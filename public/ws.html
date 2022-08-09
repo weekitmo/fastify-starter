@@ -7,6 +7,7 @@
     <title>Websocket</title>
     <script src="https://unpkg.com/vue@next"></script>
     <script src="https://unpkg.com/naive-ui@2.32.1"></script>
+    <script src="https://unpkg.com/dayjs@1.8.21/dayjs.min.js"></script>
     <style>
       body {
         padding: 16px;
@@ -36,7 +37,7 @@
     <div id="app">
       <h2>Websocket chat | {{identify}}</h2>
       <div class="flex around">
-        <n-statistic label="online" tabular-nums style="width: 120px">
+        <n-statistic label="current online" tabular-nums style="width: 120px">
           <n-number-animation :from="0" :to="onlineCount" />
         </n-statistic>
         <n-collapse :default-expanded-names="['1', '2']">
@@ -59,19 +60,49 @@
 
       <div class="btn-group">
         <n-button @click="send">send message</n-button>
-        <n-button @click="reconnect">reconnect</n-button>
-        <n-button @click="disconnect">disconnect</n-button>
+        <n-button @click="reconnectWs">reconnectWs</n-button>
+        <n-button @click="closeWs">closeWs</n-button>
       </div>
     </div>
 
     <script>
       const { createApp, h, ref, unref, onMounted, computed } = Vue
+      function bin2hex(s) {
+        let result = ``
+        let len = s.length
 
+        for (let i = 0; i < len; i++) {
+          let n = s.charCodeAt(i).toString(16)
+          result += n.length < 2 ? "0" + n : n
+        }
+
+        return result
+      }
+
+      function fingerprint() {
+        /** @type {HTMLCanvasElement} */
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")
+        const txt = window.location.origin
+        ctx.textBaseline = "top"
+        ctx.font = "14px 'Arial'"
+        ctx.textBaseline = "tencent"
+        ctx.fillStyle = "#f60"
+        ctx.fillRect(125, 1, 62, 20)
+        ctx.fillStyle = "#069"
+        ctx.fillText(txt, 2, 15)
+        ctx.fillStyle = "rgba(102, 204, 0, 0.7)"
+        ctx.fillText(txt, 4, 17)
+
+        const b64 = canvas.toDataURL().replace("data:image/png;base64,", "")
+        const bin = atob(b64)
+        const crc = bin2hex(bin.slice(-16, -12))
+        return crc
+      }
       const App = {
         name: "App",
         setup() {
-          const connecting = ref(false)
-          const heartStatus = ref("ping")
+          const keepAliveStatus = ref("ping")
           // { type, data }
           const messages = ref([])
           // connect log
@@ -84,7 +115,7 @@
             records.value = [...records.value, `[${new Date().toString()}]: ${data}`]
           }
 
-          const SocketType = {
+          const SocketMsgType = {
             // 消息记录
             message: "message",
             // 协作(不保存历史)
@@ -92,80 +123,92 @@
             // 错误
             error: "error",
             // 仅通信
-            notify: "notify",
-            // 心跳
-            pingpong: "pingpong"
+            notify: "notify"
           }
 
           /** @type {WebSocket} */
           let ws
-          const checkTime = 5000
-          const waitServeTime = checkTime + 3000
+          const checkTime = 10000
+          // wait serve time should be less than checkTime
+          const waitServeTime = 6000
           let checkTimer = null
           let waitServeTimer = null
 
-          const heartCheck = () => {
+          const keepAlive = () => {
             checkTimer = setTimeout(() => {
-              console.log(`[heart check] ---> ${Date.now()}`)
-              ws.send(
-                JSON.stringify({
-                  type: SocketType.pingpong,
-                  data: new Date().getTime()
-                })
-              )
-              heartStatus.value = `ping`
-              waitingServer()
+              if (ws) {
+                console.log(`[keep-alive]: send ping ---> ${Date.now()}`)
+                keepAliveStatus.value = `ping`
+                ws.send("0x9")
+
+                waitingServer()
+              }
             }, checkTime)
           }
 
           const waitingServer = () => {
             waitServeTimer = setTimeout(() => {
               if (ws) {
-                console.log(`[waited status]: ${heartStatus.value} <--- ${Date.now()}`)
-                if (heartStatus.value !== "pong") {
-                  disconnect({ messgae: `no response` })
+                console.log(`[keep-alive]: current keepalive status (${keepAliveStatus.value}) <--- ${Date.now()}`)
+                if (keepAliveStatus.value !== "pong") {
+                  // or reconnect something
+                  closeWs({ messgae: `ws maybe disconnect` })
                 } else {
-                  heartCheck()
+                  keepAlive()
                 }
               } else {
-                console.log(`[maybe close] <--- ${Date.now()}`)
+                console.log(`[keep-alive]: ws not init <--- ${Date.now()}`)
               }
             }, waitServeTime)
           }
 
-          const initWs = () => {
-            recordStatus("WebSocket will start connection...")
-            ws = new WebSocket(`wss://localhost:4002/ws/cooperate`)
+          const initWs = (re = false) => {
+            const tip = re ? "reconnect" : "connect"
+            recordStatus(`WebSocket start ${tip}...`)
+            const uid = fingerprint()
+            ws = new WebSocket(`${location.origin.replace(/http(s)?\:/, "ws$1:")}/ws/cooperate/${uid}`)
 
             ws.onopen = () => {
               recordStatus("WebSocket connection opened")
               if (ws.readyState === 1) {
-                connecting.value = true
-                heartCheck()
+                keepAlive()
               }
             }
 
             ws.onmessage = event => {
               try {
                 // { type, data: { category, value }, date }
+                if (typeof event.data === "string" && event.data === "0xA") {
+                  // is pong frame
+                  keepAliveStatus.value = "pong"
+                  console.log(`[keep-alive] receive pong <--- ${Date.now()}`)
+                  return
+                }
                 const json = JSON.parse(event.data)
                 switch (json.type) {
-                  case SocketType.notify:
+                  case SocketMsgType.notify:
+                    // only recieve notify message
                     console.log(json)
-                    if (json.data.category === "online") {
-                      onlineCount.value = json.data.value
-                    } else if (json.data.category === "identify") {
-                      identify.value = json.data.value
+                    const category = json.data.category
+                    switch (category) {
+                      case "online":
+                        onlineCount.value = json.data.value
+                        break
+
+                      case "identify":
+                        identify.value = json.data.value
+                        break
                     }
 
                     break
-                  case SocketType.message:
-                    messages.value = [...messages.value, `[${json.date}]: ${json.data.value} --> ${json.data.identify}`]
-                    break
-                  case SocketType.pingpong:
-                    console.log(`[receive pong] <--- ${Date.now()}`)
-                    connecting.value = true
-                    heartStatus.value = `pong`
+                  case SocketMsgType.message:
+                    const sep = json.data.identify === identify.value ? `Me` : `Other`
+                    messages.value = [
+                      ...messages.value,
+                      `[${dayjs(json.date).format(`YYYY-MM-DD HH:mm:ss`)}][${sep}]: ${json.data.value} --- ${
+                        json.data.identify
+                      }`
+                    ]
                     break
                 }
               } catch (e) {
@@ -188,8 +231,7 @@
           }
 
           const resetWsStatus = () => {
-            connecting.value = false
-            heartStatus.value = `ping`
+            keepAliveStatus.value = `ping`
             waitServeTimer && clearTimeout(waitServeTimer)
             checkTimer && clearTimeout(checkTimer)
           }
@@ -198,22 +240,21 @@
             initWs()
           })
 
-          const reconnect = () => {
-            if (connecting.value) {
-              disconnect()
+          const reconnectWs = () => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              closeWs()
               initWs()
             } else initWs()
           }
-          const disconnect = (msg = { message: `exit normal` }) => {
-            if (connecting.value) {
+          const closeWs = (msg = { message: `exit 0` }) => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
               ws && ws.close(1000, msg)
-              connecting.value = false
             }
           }
 
           const send = () => {
-            if (ws && ws.readyState === 1 && sendValue.value) {
-              ws.send(JSON.stringify({ type: `message`, data: sendValue.value }))
+            if (ws && ws.readyState === WebSocket.OPEN && sendValue.value) {
+              ws.send(JSON.stringify({ type: SocketMsgType.message, data: sendValue.value }))
               sendValue.value = ``
             }
           }
@@ -223,8 +264,8 @@
             records,
             onlineCount,
             sendValue,
-            reconnect,
-            disconnect,
+            reconnectWs,
+            closeWs,
             identify,
             send
           }

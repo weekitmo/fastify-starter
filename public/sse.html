@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SSE</title>
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+      }
+      .flex {
+        display: flex;
+      }
+      .msg {
+        padding: 10px;
+        border-bottom: 1px solid #ccc;
+        margin-bottom: 10px;
+        height: calc(100vh - 100px);
+        overflow: auto;
+      }
+      .opt span {
+        padding: 4px 8px;
+        font-size: 12px;
+        box-sizing: border-box;
+        color: #4fa5e9;
+        cursor: pointer;
+        margin: 5px;
+        border: 1px solid #cccccc;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="opt flex">
+      <span onclick="emit()">emit</span>
+      <span onclick="_close()">close</span>
+      <span onclick="_re()">reconnect</span>
+    </div>
+    <div class="msg"></div>
+
+    <script>
+      let identify = URL.createObjectURL(new Blob()).slice(-36, -1).replace(/-/g, "")
+      const box = document.querySelector(".msg")
+      /** @type {EventSource} */
+      let source = null
+      function appendToBox(msg) {
+        const p = document.createElement("p")
+        p.innerText = msg
+        box.appendChild(p)
+        document.querySelector(".msg").scrollTo(0, document.querySelector(".msg").scrollHeight)
+      }
+      function connect(re = false) {
+        if (window.EventSource) {
+          // 建立连接
+          source = new EventSource(`${window.location.origin}/sse/notify/${identify}`)
+          appendToBox(`current ${re ? "reconnect" : "connect"} id: ${identify}`)
+
+          source.addEventListener("open", e => {
+            appendToBox(`connected to ${source.url} and status: ${source.readyState}`)
+          })
+
+          source.addEventListener("message", e => {
+            const data = e.data
+            appendToBox(data)
+          })
+          source.addEventListener("error", e => {
+            appendToBox("connect error...")
+          })
+        } else {
+          appendToBox("Not support sse")
+        }
+      }
+
+      connect()
+      function emit() {
+        fetch(`/sse/visit/${identify}`, {
+          method: "POST"
+        }).finally(() => {
+          appendToBox(`emit done...`)
+        })
+      }
+
+      function _close() {
+        if (source) {
+          if (source.readyState === 2) {
+            appendToBox(`source closed: ${source.readyState}...`)
+          } else {
+            source.close()
+
+            appendToBox(`close status: ${source.readyState}`)
+            source = null
+          }
+        }
+      }
+
+      function _re() {
+        _close()
+        identify = URL.createObjectURL(new Blob()).slice(-36, -1).replace(/-/g, "")
+        connect(true)
+      }
+    </script>
+  </body>
+</html>

@@ -4,21 +4,25 @@ export interface DefUidSocket extends WebSocket {
   uid: string
 }
 
-export enum SocketDataEnum {
-  // 消息记录
+export enum SocketMsgType {
+  // msg will save to redis
   message = "message",
-  // 协作(不保存历史)
+  // realtime broadcast to all clients
   cooperate = "cooperate",
-  // 错误
+  // error type
   error = "error",
-  // 仅通信
-  notify = "notify",
-  // 心跳
-  pingpong = "pingpong"
+  // only send to identify client
+  notify = "notify"
+}
+
+export enum MsgType {
+  text = "text",
+  online = "online",
+  identify = "identify"
 }
 
 export interface MessageEvent {
-  type: keyof typeof SocketDataEnum
+  type: keyof typeof SocketMsgType
   data: any
   // Date to string
   date: string
